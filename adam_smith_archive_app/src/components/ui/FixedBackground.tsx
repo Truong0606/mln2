@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 
 interface FixedBackgroundProps {
@@ -10,13 +10,12 @@ interface FixedBackgroundProps {
 }
 
 export default function FixedBackground({ src, opacity = 0.5 }: FixedBackgroundProps) {
-    const [mounted, setMounted] = useState(false);
     const videoRef = useRef<HTMLVideoElement>(null);
-
-    useEffect(() => {
-        setMounted(true);
-        return () => setMounted(false);
-    }, []);
+    const mounted = useSyncExternalStore(
+        () => () => undefined,
+        () => true,
+        () => false
+    );
 
     useEffect(() => {
         if (mounted && videoRef.current) {

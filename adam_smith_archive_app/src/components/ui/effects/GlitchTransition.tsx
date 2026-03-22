@@ -1,12 +1,10 @@
-import React, { useEffect, useState } from 'react';
+"use client";
+
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 
 export default function GlitchTransition() {
-    const [mounted, setMounted] = useState(false);
-
-    useEffect(() => {
-        setMounted(true);
-    }, []);
+    const [mounted] = useState(true);
 
     if (!mounted) return null;
 

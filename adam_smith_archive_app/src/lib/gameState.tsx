@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 
 export interface PsychologicalInventory {
     shadowAspects: string[];
@@ -105,18 +105,23 @@ interface GameStateContextType {
 const GameStateContext = createContext<GameStateContextType | undefined>(undefined);
 
 export function GameStateProvider({ children }: { children: ReactNode }) {
-    const [gameState, setGameState] = useState<GameState>(DEFAULT_GAME_STATE);
-
-    useEffect(() => {
-        const saved = localStorage.getItem('jung_game_state');
-        if (saved) {
-            try {
-                setGameState(JSON.parse(saved));
-            } catch (error) {
-                console.error('Failed to load game state:', error);
-            }
+    const [gameState, setGameState] = useState<GameState>(() => {
+        if (typeof window === 'undefined') {
+            return DEFAULT_GAME_STATE;
         }
-    }, []);
+
+        const saved = window.localStorage.getItem('jung_game_state');
+        if (!saved) {
+            return DEFAULT_GAME_STATE;
+        }
+
+        try {
+            return JSON.parse(saved) as GameState;
+        } catch (error) {
+            console.error('Failed to load game state:', error);
+            return DEFAULT_GAME_STATE;
+        }
+    });
 
     useEffect(() => {
         localStorage.setItem('jung_game_state', JSON.stringify({

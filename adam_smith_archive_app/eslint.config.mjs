@@ -12,6 +12,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    "src/app/(playground)/**",
+    "tools/**",
+    "tailwind.config.js",
+    "src/lib/anima-expander.js",
+    "src/lib/content-enhancer.js",
   ]),
 ]);
 

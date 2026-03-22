@@ -2,15 +2,22 @@ import fs from 'fs';
 import matter from 'gray-matter';
 import { remark } from 'remark';
 import html from 'remark-html';
-import { getPillars, getArticle } from '@/lib/content-config';
+import { getAllArticleSlugs, getArticle } from '@/lib/content-config';
 import { notFound } from 'next/navigation';
 import ArchiveNeuronViewer from '@/components/reading/ArchiveNeuronViewer';
-
-export const dynamic = 'force-dynamic';
 
 interface ReadingPageProps {
     params: Promise<{ id: string; slug: string }>;
 }
+
+export async function generateStaticParams() {
+    return getAllArticleSlugs().map(({ pillar, slug }) => ({
+        id: pillar,
+        slug,
+    }));
+}
+
+export const dynamicParams = false;
 
 export default async function ReadingPage({ params }: ReadingPageProps) {
     const { id: pillarId, slug } = await params;

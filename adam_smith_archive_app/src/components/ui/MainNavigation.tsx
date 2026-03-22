@@ -1,8 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState } from "react";
-import { PILLARS, PillarConfig } from "@/lib/pillar-constants";
+import { useMemo, useState } from "react";
+import { PILLARS } from "@/lib/pillar-constants";
 
 interface MainNavigationProps {
     onNavigate?: (path: string) => void;
@@ -54,6 +54,17 @@ const pillarStyles: Record<string, { gradient: string; accent: string; delay: nu
 
 export default function MainNavigation({ onNavigate }: MainNavigationProps) {
     const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+    const orbLayout = useMemo(
+        () =>
+            Array.from({ length: 6 }, (_, index) => ({
+                id: `orb-${index}`,
+                left: `${((index * 17) + 11) % 100}%`,
+                top: `${((index * 23) + 7) % 100}%`,
+                size: `${600 + index * 200}px`,
+                background: index % 2 === 0 ? "#0ea5e9" : "#a855f7",
+            })),
+        []
+    );
 
     // --- 3D TILT LOGIC ---
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
@@ -75,9 +86,9 @@ export default function MainNavigation({ onNavigate }: MainNavigationProps) {
 
             {/* ETHEREAL FLOATING ORBS (Synced with Mouse for Parallax) */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-                {[...Array(6)].map((_, i) => (
+                {orbLayout.map((orb, i) => (
                     <motion.div
-                        key={`orb-${i}`}
+                        key={orb.id}
                         className="absolute rounded-full blur-[140px] opacity-20"
                         animate={{
                             x: [0, (i % 2 === 0 ? 1 : -1) * 100, 0],
@@ -86,11 +97,11 @@ export default function MainNavigation({ onNavigate }: MainNavigationProps) {
                         }}
                         transition={{ duration: 20 + i * 5, repeat: Infinity, ease: "linear" }}
                         style={{
-                            width: `${600 + i * 200}px`,
-                            height: `${600 + i * 200}px`,
-                            background: i % 2 === 0 ? "#0ea5e9" : "#a855f7",
-                            left: `${Math.random() * 100}%`,
-                            top: `${Math.random() * 100}%`,
+                            width: orb.size,
+                            height: orb.size,
+                            background: orb.background,
+                            left: orb.left,
+                            top: orb.top,
                             transform: `translate(${mousePos.x * (i + 1)}px, ${mousePos.y * (i + 1)}px)`
                         }}
                     />
