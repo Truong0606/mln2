@@ -9,11 +9,13 @@ import { ArticleConfig } from './types';
 
 // Define the content directories
 const contentDirectory = path.join(process.cwd(), 'content');
-// Assuming ADAM SMITH_ARCHIVE_FINAL is a sibling of jung_archive_app
-const archivesDirectory = path.resolve(process.cwd(), '../Project_Archives/Archives_VN/Adam_Smith_Archives_VN'); // Fallback if needed
-const archivesVnDirectory = path.resolve(process.cwd(), '../Project_Archives/Archives_VN/Adam_Smith_Archives_VN');
+const archivesRootDirectory = path.resolve(process.cwd(), '../Project_Archives/Archives_VN/Adam_Smith_Archives_VN');
 // Root-level Neurons folders (now in Knowledge_Neurons)
 const rootNeuronsDirectory = path.resolve(process.cwd(), '../Knowledge_Neurons');
+const archiveNeuronDirectories = Object.values(PILLAR_META)
+    .map(meta => meta.subtitle)
+    .filter((subtitle): subtitle is string => Boolean(subtitle))
+    .map(subtitle => path.join(archivesRootDirectory, subtitle));
 
 // Helper to map filename or directory to Pillar ID
 function classifyPillar(filename: string, sourceDir: string): string {
@@ -108,10 +110,10 @@ function getArticlesFromDir(dirPath: string): { pillarId: string; article: Artic
 }
 
 export function getPillars(): PillarConfig[] {
-    // 1. Read files from root directories
+    // 1. Read files from the app-local content directory and exact archive neuron folders only.
+    // Avoid scanning the entire archive root because it contains copied app assets and videos.
     const contentArticles = getArticlesFromDir(contentDirectory);
-    const archiveArticles = getArticlesFromDir(archivesDirectory);
-    const archiveVnArticles = getArticlesFromDir(archivesVnDirectory);
+    const archiveArticles = archiveNeuronDirectories.flatMap(dirPath => getArticlesFromDir(dirPath));
 
     // 2. Group by Pillar
     const pillars: Record<string, PillarConfig> = {};
@@ -127,8 +129,8 @@ export function getPillars(): PillarConfig[] {
 
             // Scan specific subdirectories for each pillar
             if (meta.subtitle) {
-                // 1. Scan in Adam_Smith_Archives_VN
-                const subDirPath = path.join(archivesVnDirectory, meta.subtitle);
+                // 1. Scan the matching archive neuron directory only
+                const subDirPath = path.join(archivesRootDirectory, meta.subtitle);
                 const neuronArticles = getArticlesFromDir(subDirPath);
                 neuronArticles.forEach(({ article }) => {
                     pillars[id].articles!.push(article);
@@ -150,7 +152,7 @@ export function getPillars(): PillarConfig[] {
         }
     });
 
-    const allArticles = [...contentArticles, ...archiveArticles, ...archiveVnArticles];
+    const allArticles = [...contentArticles, ...archiveArticles];
 
     // Ensure a default pillar exists if articles don't match any META
     const fallbackId = 'economics'; // Everything else is a "Work"
