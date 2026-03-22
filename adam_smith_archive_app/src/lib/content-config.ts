@@ -9,13 +9,12 @@ import { ArticleConfig } from './types';
 
 // Define the content directories
 const contentDirectory = path.join(process.cwd(), 'content');
-const archivesRootDirectory = path.resolve(process.cwd(), '../Project_Archives/Archives_VN/Adam_Smith_Archives_VN');
 // Root-level Neurons folders (now in Knowledge_Neurons)
 const rootNeuronsDirectory = path.resolve(process.cwd(), '../Knowledge_Neurons');
-const archiveNeuronDirectories = Object.values(PILLAR_META)
+const neuronDirectories = Object.values(PILLAR_META)
     .map(meta => meta.subtitle)
     .filter((subtitle): subtitle is string => Boolean(subtitle))
-    .map(subtitle => path.join(archivesRootDirectory, subtitle));
+    .map(subtitle => path.join(rootNeuronsDirectory, subtitle));
 
 // Helper to map filename or directory to Pillar ID
 function classifyPillar(filename: string, sourceDir: string): string {
@@ -110,10 +109,9 @@ function getArticlesFromDir(dirPath: string): { pillarId: string; article: Artic
 }
 
 export function getPillars(): PillarConfig[] {
-    // 1. Read files from the app-local content directory and exact archive neuron folders only.
-    // Avoid scanning the entire archive root because it contains copied app assets and videos.
+    // 1. Read files from the app-local content directory and the lightweight Knowledge_Neurons folders.
     const contentArticles = getArticlesFromDir(contentDirectory);
-    const archiveArticles = archiveNeuronDirectories.flatMap(dirPath => getArticlesFromDir(dirPath));
+    const neuronArticles = neuronDirectories.flatMap(dirPath => getArticlesFromDir(dirPath));
 
     // 2. Group by Pillar
     const pillars: Record<string, PillarConfig> = {};
@@ -129,30 +127,16 @@ export function getPillars(): PillarConfig[] {
 
             // Scan specific subdirectories for each pillar
             if (meta.subtitle) {
-                // 1. Scan the matching archive neuron directory only
-                const subDirPath = path.join(archivesRootDirectory, meta.subtitle);
-                const neuronArticles = getArticlesFromDir(subDirPath);
-                neuronArticles.forEach(({ article }) => {
+                const subDirPath = path.join(rootNeuronsDirectory, meta.subtitle);
+                const rootNeuronArticles = getArticlesFromDir(subDirPath);
+                rootNeuronArticles.forEach(({ article }) => {
                     pillars[id].articles!.push(article);
                 });
-
-                // 2. ALSO scan root-level Neurons folders (e.g., d:\nietzsche-chronicle\02_Kinh_Te_Thinh_Vuong_Neurons)
-                const rootSubDirPath = path.join(rootNeuronsDirectory, meta.subtitle);
-                if (rootSubDirPath !== subDirPath) {
-                    const rootNeuronArticles = getArticlesFromDir(rootSubDirPath);
-                    rootNeuronArticles.forEach(({ article }) => {
-                        // Avoid duplicates
-                        const exists = pillars[id].articles?.some(a => a.slug === article.slug);
-                        if (!exists) {
-                            pillars[id].articles!.push(article);
-                        }
-                    });
-                }
             }
         }
     });
 
-    const allArticles = [...contentArticles, ...archiveArticles];
+    const allArticles = [...contentArticles, ...neuronArticles];
 
     // Ensure a default pillar exists if articles don't match any META
     const fallbackId = 'economics'; // Everything else is a "Work"
